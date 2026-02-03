@@ -96,10 +96,30 @@ export function links() {
   ];
 }
 
-export async function loader(args: Route.LoaderArgs) {
+const CUSTOMER_QUERY = `#graphql
+  query getCustomerData {
+    customer {
+      id
+      firstName
+      lastName
+    }
+  }
+`;
 
-  console.log("[DxB][ root.tsx::loader() ][entry ] ----------------------------------->>>");
-  const {storefront, env, session} = args.context; // session is an instance of AppSession
+export const meta: Route.MetaFunction = () => [
+  {title: 'Buy Flora Bella'},
+  {
+    name: 'description',
+    content:
+      'Ancient mineral soil supplements designed to restore depleted soil and help gardens thrive.',
+  },
+];
+
+
+
+export async function loader(args: Route.LoaderArgs) {
+  //console.log("[DxB][ root.tsx::loader() ][entry ] ----------------------------------->>>");
+  const {storefront, env, session, customerAccount} = args.context;
 
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
@@ -107,8 +127,14 @@ export async function loader(args: Route.LoaderArgs) {
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
 
+  const isLoggedIn = await customerAccount.isLoggedIn();
+
+  const userData = isLoggedIn 
+    ? await customerAccount.query(CUSTOMER_QUERY).catch(() => null)
+    : Promise.resolve(null);
+
   //const session = await storage.getSession(args.request.headers.get('Cookie'));
-  console.log("[DxB][loader] Session object:", session.data);
+  //console.log("[DxB][loader] Session object:", session.data);
 
   //const passwordAllowed = session.has('passwordAllowed') && session.get('passwordAllowed') === true;
   const passwordValue = await session.get('passwordAllowed');
@@ -116,30 +142,32 @@ export async function loader(args: Route.LoaderArgs) {
   const storeLocked = env.PUBLIC_STORE_LOCKED === 'true';
   const adminBypass = env.PUBLIC_ADMIN_BYPASS_PASSWORD_ENABLED === 'true';
 
-  console.log("[DxB][loader] storeLocked =", storeLocked);
-  console.log("[DxB][loader] adminBypass =", adminBypass);
-  console.log("[DxB][loader] passwordAllowed =", passwordAllowed);  
+  //console.log("[DxB][loader] storeLocked =", storeLocked);
+  //console.log("[DxB][loader] adminBypass =", adminBypass);
+  //console.log("[DxB][loader] passwordAllowed =", passwordAllowed);  
 
   //console.log("ENV:");
   //console.log(env);
 
   const url = new URL(args.request.url);
-  console.log("[DxB][loader] pathname =", url.pathname);
+  //console.log("[DxB][loader] pathname =", url.pathname);
 
   if (storeLocked && !adminBypass && !passwordAllowed && url.pathname !== '/password') {
-    console.log("[DxB][loader] REDIRECTING to /password");    
+    //console.log("[DxB][loader] REDIRECTING to /password");    
     return redirect('/password', {
       headers: {
         'Set-Cookie': await session.commit(),
       },
     });
-  } else {
-    console.log("[DxB][loader]2 storeLocked =", storeLocked);
-    console.log("[DxB][loader]2 adminBypass =", adminBypass);
-    console.log("[DxB][loader]2 passwordAllowed =", passwordAllowed);      
-    console.log("[DxB][loader]2 pathname =", url.pathname);
-    console.log("[DxB][loader] NO REDIRECT - continuing to render root");
-  }
+  } // else {
+    //console.log("[DxB][loader]2 storeLocked =", storeLocked);
+    //console.log("[DxB][loader]2 adminBypass =", adminBypass);
+    //console.log("[DxB][loader]2 passwordAllowed =", passwordAllowed);      
+    //console.log("[DxB][loader]2 pathname =", url.pathname);
+    //console.log("[DxB][loader] NO REDIRECT - continuing to render root");
+  //}
+
+  console.info(userData?.data?.customer)
 
   // 1. Prepare the return object
   const loaderPayload = {
@@ -158,6 +186,11 @@ export async function loader(args: Route.LoaderArgs) {
       message2: env.PUBLIC_STORE_MESSAGE2 || "",
       message3: env.PUBLIC_STORE_MESSAGE3 || "",
       publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
+      omnisendBrandId: env.PUBLIC_OMNISEND_BRAND_ID,
+      surveyApiBase: env.PUBLIC_SURVEY_API_BASE,
+      surveyApiRoute: env.PUBLIC_SURVEY_API_ROUTE,
+      mailApiBase: env.PUBLIC_MAIL_API_BASE,
+      mailApiRoute: env.PUBLIC_MAIL_API_ROUTE,
     },    
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
     shop: getShopAnalytics({
@@ -175,7 +208,8 @@ export async function loader(args: Route.LoaderArgs) {
       publicTimer: env.PUBLIC_COUNTDOWN_TIMER_ENABLED === "true",
       surveysEnabled: env.PUBLIC_SITE_SURVEY_ENABLED === "true",
       surveySingleAnswer: env.PUBLIC_SITE_SURVEY_SINGLE_ANSWER === "true",
-    }
+    },
+    userData: userData?.data?.customer
   };
 
   // 2. Console log the payload
@@ -189,19 +223,39 @@ export async function loader(args: Route.LoaderArgs) {
  * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
  */
 async function loadCriticalData({context}: Route.LoaderArgs) {
-  const {storefront} = context;
+  const {storefront, customerAccount} = context;
 
-  const [header] = await Promise.all([
+  /*
+  const [header, isLoggedIn] = await Promise.all([
     storefront.query(HEADER_QUERY, {
       cache: storefront.CacheLong(),
       variables: {
-        headerMenuHandle: 'main-menu', // Adjust to your header menu handle
+        headerMenuHandle: 'main-menu',
       },
     }),
+    customerAccount.isLoggedIn(),
+    // Add other queries here, so that they are loaded in parallel
+  ]);
+  */
+  return {}; // DxB isLoggedIn is queried above - remove this (probably) in entirety
+
+  //return {header, isLoggedIn};
+
+  /*
+  DxB
+  const [header, isLoggedIn] = await Promise.all([
+    storefront.query(HEADER_QUERY, {
+      cache: storefront.CacheLong(),
+      variables: {
+        headerMenuHandle: 'main-menu',
+      },
+    }),
+    customerAccount.isLoggedIn(),
     // Add other queries here, so that they are loaded in parallel
   ]);
 
-  return {header};
+  return {header, isLoggedIn};
+  */
 }
 
 /**
@@ -210,9 +264,17 @@ async function loadCriticalData({context}: Route.LoaderArgs) {
  * Make sure to not throw any errors here, as it will cause the page to 500.
  */
 function loadDeferredData({context}: Route.LoaderArgs) {
-  const {storefront, customerAccount, cart, env} = context;
+  const {storefront, cart, env} = context;
 
   // defer the footer query (below the fold)
+
+  return {
+    cart: cart.get(),
+    env,
+  };
+
+  // defer the footer query (below the fold)
+  /*
   const footer = storefront
     .query(FOOTER_QUERY, {
       cache: storefront.CacheLong(),
@@ -226,10 +288,10 @@ function loadDeferredData({context}: Route.LoaderArgs) {
     });
   return {
     cart: cart.get(),
-    isLoggedIn: customerAccount.isLoggedIn(),
     footer,
     env,
   };
+  */
 }
 
 export function Layout({children}: {children?: React.ReactNode}) {
@@ -255,7 +317,7 @@ export function Layout({children}: {children?: React.ReactNode}) {
 }
 
 export default function App() {
-  console.log("DxB - - - -- -- -- -- --- --- --- --- ---- ---- ---- ---- root.tsx ---- App()");
+  //console.log("DxB - - - -- -- -- -- --- --- --- --- ---- ---- ---- ---- root.tsx ---- App()");
   const data = useRouteLoaderData<RootLoader>('root');
   const url = typeof window !== 'undefined' ? window.location.pathname : '';
 
@@ -267,7 +329,7 @@ export default function App() {
     </FeatureFlagsProvider>;
   }
 
-  console.log("[DxB][Past /password page check for url="+url);
+  //console.log("[DxB][Past /password page check for url="+url);
 
   // ---------------- CLIENT-SIDE PASSWORD PROTECTION ----------------
   const [passwordBypass, setPasswordBypass] = useState(false);

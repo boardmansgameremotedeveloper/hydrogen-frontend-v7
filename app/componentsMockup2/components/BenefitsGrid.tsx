@@ -1,41 +1,42 @@
-import { Bug, Sparkles, Users, Leaf, Droplet, Shield, Flower2 } from 'lucide-react';
+import { Bug, Sparkles, Users, Leaf, Droplet, Flag, Shield, FileStack, Flower2 } from 'lucide-react';
+import { Folders } from 'lucide-react';
 
 export default function BenefitsGrid() {
   const benefits = [
     {
-      icon: Bug,
-      title: 'Supports beneficial microbes',
-      description: 'Formulated to support the tiny life in your soil that feeds your plants every day.',
-      image: 'https://images.pexels.com/photos/1459495/pexels-photo-1459495.jpeg?auto=compress&cs=tinysrgb&w=1920',
+      icon: Leaf,
+      title: 'Compost-Friendly Trace Minerals',
+      description: 'Designed to work alongside compost and living soil systems — helping unlock what your soil is already capable of.',
+      image: 'https://cdn.shopify.com/s/files/1/0640/4833/2903/files/Why_Growers_Choose_1_of_6_Compost_pile.jpg?v=1769724521',
+    },
+    {
+      icon: FileStack,
+      title: 'Ancient + Mineral-dense',
+      description: 'Made from mineral deposits formed over thousands of years — carrying complexity you can’t replicate in a lab.',
+      image: 'https://cdn.shopify.com/s/files/1/0640/4833/2903/files/Why_Growers_Choose_2_of_6_FB_Zoom_in.jpg?v=1769724260',
+    },
+    {
+      icon: Flag,
+      title: 'Born in the USA',
+      description: 'Sourced and crafted in the United States, Flora Bella is composted for 6-8 months to reawaken naturally occurring microbes and biology that have rested for thousands of years - brining ancient mineral vitality back into living soil.',
+      image: 'https://cdn.shopify.com/s/files/1/0640/4833/2903/files/Why_Growers_Choose_3_of_6_Hand_w_Tomato.jpg?v=1769724522',
     },
     {
       icon: Sparkles,
-      title: 'Magnesium enriched',
-      description: 'Crafted with an ideal balance of magnesium for lush color and strong photosynthesis.',
-      image: 'https://images.pexels.com/photos/4750274/pexels-photo-4750274.jpeg?auto=compress&cs=tinysrgb&w=1920',
+      title: 'Iron-ore Derived Blend',
+      description: 'Encapsulated in an iron core, preserving the natural biology in the Bucatunna clay.',
+      image: 'https://cdn.shopify.com/s/files/1/0640/4833/2903/files/Why_Growers_Choose_4_of_6_Flora_Bella_Bio_Trace.jpg?v=1769724522',
+    },
+    {
+      icon: Bug,
+      title: 'Biology Included',
+      description: 'Designed to support beneficial microbes and nutrient cycling — the living foundation behind healthy, resilient soil.',
+      image: 'https://cdn.shopify.com/s/files/1/0640/4833/2903/files/Why_Growers_Choose_5_of_6_lighted_roots.jpg?v=1769724521',
     },
     {
       icon: Users,
-      title: 'Created by growers',
-      description: 'Developed by growers who care about long term soil health, not quick chemical fixes.',
-      image: 'https://images.pexels.com/photos/4503267/pexels-photo-4503267.jpeg?auto=compress&cs=tinysrgb&w=1920',
-    },
-    {
-      icon: Leaf,
-      title: 'Safe for food gardens',
-      description: 'Suitable for vegetables, herbs, and fruit when used according to label directions.',
-      image: 'https://images.pexels.com/photos/4750270/pexels-photo-4750270.jpeg?auto=compress&cs=tinysrgb&w=1920',
-    },
-    {
-      icon: Droplet,
-      title: 'Clean formula',
-      description: 'Zero synthetic fragrance, zero bright dyes, just powerful trace minerals.',
-      image: 'https://images.pexels.com/photos/1415558/pexels-photo-1415558.jpeg?auto=compress&cs=tinysrgb&w=1920',
-    },
-    {
-      icon: Shield,
-      title: 'Lab checked',
-      description: 'Every batch tested for quality and screened for heavy metal safety.',
+      title: 'Handled with Care + Lab Verified',
+      description: 'Gently processed and packaged with care, with quality checks to support consistency and peace of mind.',
       image: 'https://images.pexels.com/photos/256262/pexels-photo-256262.jpeg?auto=compress&cs=tinysrgb&w=1920',
     },
   ];
@@ -89,7 +90,11 @@ export default function BenefitsGrid() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent"></div>
                 <div className="absolute bottom-4 left-4 inline-flex items-center justify-center w-12 h-12 bg-[#7cb342] rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
-                  <benefit.icon className="w-6 h-6 text-white" />
+                  {typeof benefit.icon === 'string' ? (
+                    <img src={benefit.icon} alt={benefit.title} className="w-6 h-6" />
+                  ) : (
+                    <benefit.icon className="w-6 h-6 text-white" />
+                  )}
                 </div>
               </div>
               <div className="p-6">

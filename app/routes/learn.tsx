@@ -2,7 +2,6 @@ import { type LoaderFunctionArgs, useLoaderData, Link } from 'react-router';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { Clock, ArrowRight, BookOpen } from 'lucide-react';
-import AnnouncementBar from '../componentsMockup2/components/AnnouncementBar';
 
 interface ShopifyImage {
   url: string;
@@ -60,7 +59,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
 }
 
 const calculateReadTime = (content: string) => {
-  const wordsPerMinute = 1;
+  const wordsPerMinute = 200;
   const words = content ? content.split(/\s+/).length : 0;
   return Math.ceil(words / wordsPerMinute) || 1;
 };
@@ -142,7 +141,6 @@ export default function LearnPage() {
 
   return (
     <>
-      <AnnouncementBar />
       <div className="relative min-h-screen bg-gradient-to-b from-[#f5f5f0] to-[#e8e8e0] pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0 opacity-30" style={{
           backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(124, 179, 66, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(124, 179, 66, 0.08) 0%, transparent 50%)',
@@ -257,6 +255,7 @@ export default function LearnPage() {
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-gray-500">{calculateReadTime(guide.content)} min read</span>
                       </div>
+                      <div className="hidden">
                       {guide.tags?.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
                           {guide.tags.map((tag) => (
@@ -269,6 +268,7 @@ export default function LearnPage() {
                           ))}
                         </div>
                       )}
+                      </div>
                     </Link>
                   ));
                 })()}

@@ -7,7 +7,8 @@ import HowItWorks from '../components/HowItWorks';
 import MineralComposition from '../components/MineralComposition';
 import SocialProof from '../components/SocialProof';
 import EducationSection from '../components/EducationSection';
-import VideoReels from '../components/VideoReels';
+//import VideoReels from '../components/VideoReels';
+import VideoReelsIframe from '../components/VideoReelsIframe';
 import CommunityCallout from '../components/CommunityCallout';
 
 export default function HomePage() {
@@ -16,13 +17,12 @@ export default function HomePage() {
       <AnnouncementBar />
       <HeroSection />
       <ReassuranceStrip />
-      <FeatureProduct />
       <BenefitsGrid />
       <HowItWorks />
       <MineralComposition />
       <SocialProof />
       <EducationSection />
-      <VideoReels />
+      <VideoReelsIframe />
       <CommunityCallout />
     </>
   );

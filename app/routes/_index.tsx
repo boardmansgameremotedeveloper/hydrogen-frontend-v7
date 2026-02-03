@@ -8,14 +8,33 @@ import {Suspense} from 'react';
 import {Image} from '@shopify/hydrogen';
 import type {
   FeaturedCollectionFragment,
-  RecommendedProductsQuery,
 } from 'storefrontapi.generated';
 import {ProductItem} from '~/components/ProductItem';
 import LandingPage from '../componentsMockup2/pages/HomePage'
+import {getSeoMeta} from '@shopify/hydrogen';
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: 'Hydrogen | Home'}];
+
+//export const meta: Route.MetaFunction = () => { return [{title: 'Hydrogen | Home'}]; };
+
+export const meta: Route.MetaFunction = ({data}) => {
+  const seo = data?.seo;
+
+  const title = seo?.title
+    ? `${seo.title} | Premium Trace Minerals`
+    : 'Buy Flora Bella';
+
+  return [
+    {title},
+    {
+      name: 'description',
+      content:
+        seo?.description ??
+        'Premium mineral soil supplement for healthier, more vibrant gardens.',
+    },
+  ];
 };
+
+
 
 export async function loader(args: Route.LoaderArgs) {
   const {env} = args.context;
@@ -25,7 +44,12 @@ export async function loader(args: Route.LoaderArgs) {
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
 
-  return {...deferredData, ...criticalData, env};
+  return {...deferredData, ...criticalData, env,
+    seo: {
+      title: 'Buy Flora Bella',
+      description: 'Florabella premium mineral soil supplement for healthier, more vibrant gardens.',
+    },
+  };
 }
 
 /**
@@ -49,16 +73,15 @@ async function loadCriticalData({context}: Route.LoaderArgs) {
  * Make sure to not throw any errors here, as it will cause the page to 500.
  */
 function loadDeferredData({context}: Route.LoaderArgs) {
-  const recommendedProducts = context.storefront
-    .query(RECOMMENDED_PRODUCTS_QUERY)
+  const latestProduct = context.storefront
+    .query(PRODUCT_QUERY)
     .catch((error: Error) => {
-      // Log query errors, but don't throw them so the page can still render
       console.error(error);
       return null;
     });
 
   return {
-    recommendedProducts,
+    latestProduct,
   };
 }
 
@@ -67,8 +90,6 @@ export default function Homepage() {
   return (
     <div className="home">
       <LandingPage />
-      {/* <FeaturedCollection collection={data.featuredCollection} /> */}
-      {/* <RecommendedProducts products={data.recommendedProducts} /> */}
     </div>
   );
 }
@@ -95,32 +116,6 @@ function FeaturedCollection({
   );
 }
 
-function RecommendedProducts({
-  products,
-}: {
-  products: Promise<RecommendedProductsQuery | null>;
-}) {
-  return (
-    <div className="recommended-products">
-      <h2>Recommended Products</h2>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Await resolve={products}>
-          {(response) => (
-            <div className="recommended-products-grid">
-              {response
-                ? response.products.nodes.map((product) => (
-                    <ProductItem key={product.id} product={product} />
-                  ))
-                : null}
-            </div>
-          )}
-        </Await>
-      </Suspense>
-      <br />
-    </div>
-  );
-}
-
 const FEATURED_COLLECTION_QUERY = `#graphql
   fragment FeaturedCollection on Collection {
     id
@@ -144,30 +139,37 @@ const FEATURED_COLLECTION_QUERY = `#graphql
   }
 ` as const;
 
-const RECOMMENDED_PRODUCTS_QUERY = `#graphql
-  fragment RecommendedProduct on Product {
-    id
-    title
-    handle
-    priceRange {
-      minVariantPrice {
-        amount
-        currencyCode
-      }
-    }
-    featuredImage {
-      id
-      url
-      altText
-      width
-      height
-    }
-  }
-  query RecommendedProducts ($country: CountryCode, $language: LanguageCode)
+const PRODUCT_QUERY = `#graphql
+  query Product($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
-    products(first: 4, sortKey: UPDATED_AT, reverse: true) {
+    products(first: 1, sortKey: UPDATED_AT, reverse: true) {
       nodes {
-        ...RecommendedProduct
+        id
+        title
+        handle
+        featuredImage {
+          url
+          altText
+          width
+          height
+        }
+        priceRange {
+          minVariantPrice {
+            amount
+            currencyCode
+          }
+        }
+        variants(first: 10) {
+          nodes {
+            id
+            title
+            price {
+              amount
+              currencyCode
+            }
+            availableForSale
+          }
+        }
       }
     }
   }

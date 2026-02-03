@@ -2,21 +2,92 @@ import { useState } from 'react';
 import { Mail, Phone, Clock, MapPin, Send, Users, Package, ExternalLink } from 'lucide-react';
 import PageBackground from '../componentsMockup2/components/PageBackground';
 import AnnouncementBar from '../componentsMockup2/components/AnnouncementBar';
+import { useRouteLoaderData } from 'react-router';
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
+  // Read from root loader (runtime-safe)
+  const { env } = useRouteLoaderData('root');
+
+  type ContactForm = {
+    name: string;
+    email: string;
+    phone: string;
+    subject: string;
+    message: string;
+    inquiry_type: string;
+    orderNumber: string;
+  };
+
+  // const [formData, setFormData] = useState<ContactForm>({
+  //   name: 'John Doe',
+  //   email: 'webmaster@allthingsgood.com',
+  //   phone: '555-0199',
+  //   subject: 'Integration Question',
+  //   message: 'Testing the backend sync.',
+  //   inquiry_type: 'general',
+  //   orderNumber: '',
+  // });
+  const [formData, setFormData] = useState<ContactForm>({
     name: '',
     email: '',
     phone: '',
     subject: '',
     message: '',
-    inquiryType: 'general',
+    inquiry_type: 'general',
     orderNumber: '',
   });
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+
+  const [statusBackend, setStatusBackend] = useState<{
+    type: 'success' | 'error' | 'loading' | null;
+    message: string;
+  } | null>(null);  
 
   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatusBackend({ type: 'loading', message: 'Syncing...' });
+    //setSubmitting(true);
+
+    const mailUrl = new URL(
+      env.mailApiRoute,
+      env.mailApiBase
+    ).toString();
+
+    console.log("---------->>>>>>>> SENDING A REQUEST FOR MAILER: " + mailUrl);
+    try {
+      const response = await fetch(mailUrl, 
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      //setSubmitted(true);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Submission failed');
+
+      // Omnisend Identify
+      if (window.omnisend) {
+        window.omnisend.push(["identifyContact", {
+          email: formData.email,
+          firstName: formData.name,
+          phone: formData.phone,
+          tags: ["source:contact-page", `inquiry:${formData.inquiry_type}`]
+        }]);
+      }
+
+      setStatusBackend({ type: 'success', message: data.success || 'Message sent!' });
+    } catch (error: any) {
+      setStatusBackend({ type: 'error', message: error.message });
+    }
+  };
+
+
+/*
+Waits 1-second, updates the page pretending it is "submitting something".
+Waits 5-seconds, clears the notification and the form
+
+  const handleSubmit_v1_real = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
@@ -32,7 +103,7 @@ export default function ContactPage() {
         phone: '',
         subject: '',
         message: '',
-        inquiryType: 'general',
+        inquity_type: 'general',
         orderNumber: '',
       });
 
@@ -43,7 +114,7 @@ export default function ContactPage() {
       setSubmitting(false);
     }
   };
-
+*/
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
       ...prev,
@@ -82,7 +153,7 @@ export default function ContactPage() {
               Earn rewards by sharing Flora Bella with your community. Sign-ups are managed through our partner platform.
             </p>
             <a
-              href="https://uppromote.com"
+              href="https://af.uppromote.com/incfve-s8/register"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#7cb342] hover:bg-[#8bc34a] text-white rounded-xl font-semibold transition-all duration-300 hover:scale-105"
@@ -108,9 +179,9 @@ export default function ContactPage() {
               onClick={(e) => {
                 e.preventDefault();
                 const form = document.getElementById('contact-form');
-                const inquiryType = document.getElementById('inquiryType') as HTMLSelectElement;
-                if (inquiryType) {
-                  inquiryType.value = 'wholesale';
+                const inquiry_type = document.getElementById('inquiry_type') as HTMLSelectElement;
+                if (inquiry_type) {
+                  inquiry_type.value = 'wholesale';
                 }
                 form?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
@@ -197,9 +268,9 @@ export default function ContactPage() {
                 <div>
                   <label className="block text-white mb-2 font-semibold">Inquiry Type *</label>
                   <select
-                    id="inquiryType"
-                    name="inquiryType"
-                    value={formData.inquiryType}
+                    id="inquiry_type"
+                    name="inquiry_type"
+                    value={formData.inquiry_type}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 glass border border-white/20 rounded-xl text-white focus:outline-none focus:border-[#7cb342] transition-colors bg-transparent"
@@ -213,7 +284,7 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              {formData.inquiryType === 'order' && (
+              {formData.inquiry_type === 'order' && (
                 <div>
                   <label className="block text-white mb-2 font-semibold">Order Number</label>
                   <input
@@ -255,10 +326,11 @@ export default function ContactPage() {
 
               <button
                 type="submit"
-                disabled={submitting}
+                // Disable if the backend is currently processing
+                disabled={statusBackend?.type === 'loading'}
                 className="w-full py-4 bg-[#7cb342] hover:bg-[#8bc34a] text-white rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {submitting ? (
+                >
+                {statusBackend?.type === 'loading' ? (
                   'Sending...'
                 ) : (
                   <>
@@ -268,11 +340,24 @@ export default function ContactPage() {
                 )}
               </button>
 
-              {submitted && (
-                <div className="p-4 bg-[#7cb342]/20 border border-[#7cb342] rounded-xl text-[#7cb342] text-center">
-                  Thank you! We've received your message and will respond within 24 hours.
-                </div>
-              )}
+              <div className="status-feedback mt-6">
+                {statusBackend?.type === 'loading' && (
+                  <div className="p-4 bg-blue-500/20 border border-blue-500 rounded-xl text-blue-200 text-center">
+                    Sending message ...
+                  </div>
+                )}
+                {statusBackend?.type === 'success' && (
+                  <div className="p-4 bg-[#7cb342]/20 border border-[#7cb342] rounded-xl text-[#7cb342] text-center">
+                    {statusBackend.message}
+                  </div>
+                )}
+                {statusBackend?.type === 'error' && (
+                  <div className="p-4 bg-red-500/20 border border-red-500 rounded-xl text-red-200 text-center">
+                    {statusBackend.message}
+                  </div>
+                )}
+              </div>
+
             </form>
           </div>
 

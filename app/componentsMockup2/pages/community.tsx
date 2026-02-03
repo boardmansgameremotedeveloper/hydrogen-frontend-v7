@@ -117,23 +117,23 @@ export default function CommunityPage() {
               Growing Together
             </h1>
             <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-              Join thousands of health enthusiasts who are transforming their lives with Flora Bella. Share your journey, inspire others, and celebrate wellness together.
+              Join thousands of health enthusiasts who are transforming their gardens with Flora Bella. Share your journey, inspire others, and celebrate wellness together.
             </p>
           </div>
 
           <div className="bg-white border border-gray-200 shadow-lg rounded-3xl p-8 mb-12">
             <div className="grid md:grid-cols-3 gap-8 text-center">
               <div>
-                <div className="text-4xl font-bold text-[#7cb342] mb-2">15,000+</div>
-                <div className="text-gray-600 font-semibold">Community Members</div>
+                <div className="text-4xl font-bold text-[#7cb342] mb-2">50+</div>
+                <div className="text-gray-600 font-semibold">Years in Use</div>
               </div>
               <div>
-                <div className="text-4xl font-bold text-[#7cb342] mb-2">2,500+</div>
-                <div className="text-gray-600 font-semibold">Shared Stories</div>
+                <div className="text-4xl font-bold text-[#7cb342] mb-2">10,000+</div>
+                <div className="text-gray-600 font-semibold">Forms</div>
               </div>
               <div>
-                <div className="text-4xl font-bold text-[#7cb342] mb-2">95%</div>
-                <div className="text-gray-600 font-semibold">Satisfaction Rate</div>
+                <div className="text-4xl font-bold text-[#7cb342] mb-2">+1M</div>
+                <div className="text-gray-600 font-semibold">Acres</div>
               </div>
             </div>
           </div>
@@ -180,7 +180,7 @@ export default function CommunityPage() {
           <div className="mt-16 bg-gradient-to-r from-[#7cb342] to-[#8bc34a] rounded-3xl p-12 text-center text-white shadow-2xl">
             <h2 className="text-4xl font-bold mb-4">Share Your Journey</h2>
             <p className="text-xl mb-8 text-white/90 max-w-2xl mx-auto">
-              Inspire others by sharing your wellness transformation with Flora Bella. Tag us on social media or submit your story directly.
+              Inspire others by sharing your soil's transformation with Flora Bella. Tag us on social media or submit your story directly.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="px-8 py-4 bg-white text-[#7cb342] rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">

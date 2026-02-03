@@ -1,7 +1,91 @@
-import { Instagram, Facebook, Youtube, Twitter, CreditCard, ArrowRight } from 'lucide-react';
+import { Instagram, Facebook, Youtube, Twitter, Linkedin, CreditCard, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useRouteLoaderData } from 'react-router';
 
 export default function Footer() {
+  // Read from root loader (runtime-safe)
+  const rootData = useRouteLoaderData('root') as {
+    env?: {
+      omnisendBrandId?: string;
+    };
+  };
+
+  const BRAND_ID = rootData?.env?.omnisendBrandId;  
+  console.log("BRAND_ID:" + BRAND_ID);
+
+  // Form State
+  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  useEffect(() => {
+    if (!BRAND_ID) {
+      console.warn('Omnisend Brand ID missing');
+      return;
+    }
+
+    // Initialize queue
+    window.omnisend = window.omnisend || [];
+    window.omnisend.push(['brandID', BRAND_ID]);
+    window.omnisend.push(['track', '$pageViewed']);
+
+    console.log(window.omnisend);
+
+    // Load SDK once
+    if (!document.getElementById('omnisend-script')) {
+      const script = document.createElement('script');
+      script.id = 'omnisend-script';
+      script.src = 'https://omnisnippet1.com/inshop/launcher-v2.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, [BRAND_ID]);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    console.log("NewLetterSubmit() [ entry ] ");
+    e.preventDefault();
+    //setStatus('loading');
+
+    // Omnisend push commands are safe to call as soon as the array is initialized
+    if (window.omnisend) {
+      console.log("Send to omnisend");
+
+      try {
+        window.omnisend.push(["identifyContact", {
+          email: email,
+          firstName: firstName,
+          tags: ["source:footer-custom-signup"],
+          identifiers: [{
+            type: "email",
+            id: email,
+            channels: {
+              email: {
+                status: "subscribed",
+                statusDate: new Date().toISOString()
+              }
+            }
+          }]
+        }]);
+
+        // Optional: track a custom event if you have a specific automation trigger
+        window.omnisend.push(["track", "Newsletter Subscribed"]);
+
+        setStatus('success');
+        setEmail('');
+        setFirstName('');
+        // Reset to idle after 5 seconds
+        setTimeout(() => setStatus('idle'), 5000);
+      } catch (err) {
+        console.error("Omnisend submission error:", err);
+        setStatus('error');
+      }
+    } else {
+      console.log("ERROR Sending to omnisend");
+      setStatus('error');
+    }
+  };  
+
   return (
     <footer className="bg-[#0a0015] border-t border-white/10">
       <div className="max-w-7xl mx-auto px-6 py-16">
@@ -18,32 +102,32 @@ export default function Footer() {
             </p>
             <div className="flex gap-4">
               <a
-                href="#"
+                href="https://instagram.com/buyflorabella/"
                 className="p-2 glass rounded-lg hover:bg-white/10 transition-colors"
                 aria-label="Instagram"
               >
-                <Instagram className="w-5 h-5" />
+                <Instagram className="w-5 h-5 text-white" />
               </a>
               <a
-                href="#"
+                href="https://www.facebook.com/profile.php?id=61586134112080"
                 className="p-2 glass rounded-lg hover:bg-white/10 transition-colors"
                 aria-label="Facebook"
               >
-                <Facebook className="w-5 h-5" />
+                <Facebook className="w-5 h-5 text-white" />
               </a>
               <a
-                href="#"
+                href="https://www.youtube.com/@BuyFloraBella"
                 className="p-2 glass rounded-lg hover:bg-white/10 transition-colors"
                 aria-label="Youtube"
               >
-                <Youtube className="w-5 h-5" />
+                <Youtube className="w-5 h-5 text-white" />
               </a>
               <a
                 href="#"
                 className="p-2 glass rounded-lg hover:bg-white/10 transition-colors"
-                aria-label="Twitter"
+                aria-label="X"
               >
-                <Twitter className="w-5 h-5" />
+                <Linkedin className="w-5 h-5 text-white" />
               </a>
             </div>
           </div>
@@ -119,46 +203,17 @@ export default function Footer() {
               </li>
             </ul>
           </div>
-
           <div>
-            <h4 className="font-bold heading-font text-white mb-6">Stay Connected</h4>
+            <h4 className="font-bold heading-font text-white mb-6">
+              Stay Connected
+            </h4>
+
             <p className="text-white/70 text-sm mb-4">
               Get growing tips and exclusive offers delivered to your inbox.
             </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                const name = formData.get('name');
-                const email = formData.get('email');
-                console.log('Newsletter signup:', { name, email });
-                alert('Thank you for subscribing!');
-                e.currentTarget.reset();
-              }}
-              className="space-y-3"
-            >
-              <input
-                type="text"
-                name="name"
-                placeholder="Your name"
-                required
-                className="w-full glass border border-white/20 rounded-xl px-4 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#ff1493] transition-colors"
-              />
-              <input
-                type="email"
-                name="email"
-                placeholder="Your email"
-                required
-                className="w-full glass border border-white/20 rounded-xl px-4 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#ff1493] transition-colors"
-              />
-              <button
-                type="submit"
-                className="w-full gradient-lime-magenta text-[#0a0015] py-2 rounded-xl font-bold text-sm hover:scale-105 transition-transform flex items-center justify-center gap-2"
-              >
-                Subscribe
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
+
+            {/* Omnisend Embedded Form */}
+            <div id="omnisend-embedded-v2-697e24c030f57720a72a784e" className="rounded-xl overflow-hidden"/>
           </div>
         </div>
                     
@@ -168,7 +223,7 @@ export default function Footer() {
               © 2026 Flora Bella Trace Minerals. All rights reserved.
             </p>
             <p className="text-white/50 text-sm">
-              Version: <span>DxB v7.4</span>
+              Site [ v7.8 ] by: BIRD Labs
             </p>
             <div className="flex items-center gap-4">
               <div className="flex gap-2 items-center">
